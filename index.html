@@ -1,0 +1,122 @@
+<html>
+    <head>
+        <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+        <meta content="utf-8" http-equiv="encoding">
+        <title>Gross Domestic Product Bar Chart</title>
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body>
+        <svg width="1050" height="600"></svg>
+        <script src="https://d3js.org/d3.v3.min.js"></script>
+        <script>
+            function initChart() {
+                var svg = d3.select('svg'),
+                    margin = { top: 40, right: 40, bottom: 40, left: 70 },
+                    width = +svg.attr('width'),
+                    height = +svg.attr('height');
+
+                d3.json('https://raw.githubusercontent.com/FreeCodeCamp/ProjectReferenceData/master/GDP-data.json',
+                    function(d) {
+                        // map the data to a new array of objects
+                        var data = d.data.map(function(curr) {
+                            return { "date": new Date(curr[0]),
+                                     "gdp": +curr[1] }
+                            });
+
+                        // Set the range of the x axis with a time scale
+                        // for the date
+                        var xRange = d3.time.scale().range([margin.left, width - margin.right])
+                            .domain(d3.extent(data, function(d) {
+                                return d.date;
+                            }));
+
+                        // Set the range of the y axis with a linear scale
+                        // for gdp
+                        var yRange = d3.scale.linear().range([height - margin.top, margin.bottom])
+                            .domain([0, d3.max(data, function(d) {
+                                return d.gdp;
+                            })]);
+
+                        // Set the x-axis range and ticks
+                        var xAxis = d3.svg.axis()
+                            .scale(xRange)
+                            .ticks(15);
+
+                        // Set the y-axis range and orientation
+                        var yAxis = d3.svg.axis()
+                            .scale(yRange)
+                            .orient('left');
+
+                        // The div used for tooltips
+                        var div = d3.select('body').append('div')
+                            .attr('class', 'tooltip')
+                            .style('opacity', 0);
+
+                        // format the time for the tooltip
+                        var formatTime = d3.time.format('%B %Y')
+
+                        // Append the x-axis to the svg element and style it
+                        svg.append('svg:g')
+                            .attr('class', 'x axis')
+                            .attr('transform', 'translate(0,' + (height - margin.bottom) + ')')
+                            .call(xAxis);
+
+                        // Append the y-axis to the svg element and style it and
+                        // add a description
+                        svg.append('svg:g')
+                                .attr('class', 'y axis')
+                                .attr('transform', 'translate(' + (margin.left) + ',0)')
+                                .call(yAxis)
+                            .append('text')
+                                .attr('transform', 'rotate(-90)')
+                                .attr('x', -margin.top)
+                                .attr('y', 5)
+                                .attr('dy', '.5em')
+                                .style('text-anchor', 'end')
+                                .text('Gross Domestic Product, USA');
+
+                        // Populate the chart with the data
+                        svg.selectAll('rect')
+                            .data(data)
+                            .enter()
+                            .append('rect')
+                                .attr('x', function(d) {
+                                    return xRange(d.date);
+                                })
+                                .attr('y', function(d) {
+                                    return yRange(d.gdp);
+                                })
+                                .attr('width', '.2em')
+                                .attr('height', function(d) {
+                                    return ((height - margin.bottom) - yRange(d.gdp));
+                                })
+                                .attr('class', 'bar')
+                            .on('mouseover', function(d) {
+                                div.transition()
+                                    .duration(200)
+                                    .style('opacity', .8);
+                                div .html('$' + d.gdp + ' Billion' + '<br />' + formatTime(d.date))
+                                    .style('left', (d3.event.pageX + 4) + 'px')
+                                    .style('top', (d3.event.pageY - 28) + 'px')
+                            })
+                            .on('mouseout', function(d) {
+                                div.transition()
+                                    .duration(300)
+                                    .style('opacity', 0)
+                            });
+
+                        // Add a title to the chart
+                        svg.append('text')
+                            .attr('x', (width / 2))
+                            .attr('y', (margin.top / 2))
+                            .attr('text-anchor', 'middle')
+                            .attr('class', 'title')
+                            .text('Gross Domestic Product, USA');
+                    }
+                );
+            }
+
+            initChart();
+        </script>
+    </body>
+</html>
